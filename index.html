@@ -1,1 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>IntelliXO</title>
 
+<style>
+
+body{
+margin:0;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+font-family:Arial;
+background:linear-gradient(135deg,#ff7b8f,#7b6cff);
+}
+
+.card{
+background:rgba(255,255,255,0.2);
+padding:40px;
+border-radius:20px;
+text-align:center;
+width:320px;
+box-shadow:0 10px 25px rgba(0,0,0,0.3);
+}
+
+.hidden{display:none;}
+
+.title{
+font-size:40px;
+color:white;
+text-shadow:0 0 10px cyan;
+}
+
+input{
+padding:10px;
+border:none;
+border-radius:10px;
+margin-bottom:20px;
+width:80%;
+}
+
+.btnGroup button{
+padding:10px 20px;
+margin:5px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+}
+
+.board{
+display:grid;
+grid-template-columns:repeat(3,80px);
+gap:10px;
+justify-content:center;
+margin:20px 0;
+}
+
+.cell{
+width:80px;
+height:80px;
+background:rgba(255,255,255,0.5);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:35px;
+cursor:pointer;
+border-radius:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="startScreen" class="card">
+
+<h1 class="title">IntelliXO</h1>
+
+<input id="playerName" placeholder="Enter name">
+
+<p style="color:white;">Choose Difficulty</p>
+
+<div class="btnGroup">
+<button onclick="startGame('easy')">Easy</button>
+<button onclick="startGame('medium')">Medium</button>
+<button onclick="startGame('hard')">Hard</button>
+</div>
+
+</div>
+
+
+<div id="gameScreen" class="card hidden">
+
+<h2 id="welcome" style="color:white;"></h2>
+
+<div class="board" id="board">
+
+<div class="cell" onclick="playerMove(this)"></div>
+<div class="cell" onclick="playerMove(this)"></div>
+<div class="cell" onclick="playerMove(this)"></div>
+
+<div class="cell" onclick="playerMove(this)"></div>
+<div class="cell" onclick="playerMove(this)"></div>
+<div class="cell" onclick="playerMove(this)"></div>
+
+<div class="cell" onclick="playerMove(this)"></div>
+<div class="cell" onclick="playerMove(this)"></div>
+<div class="cell" onclick="playerMove(this)"></div>
+
+</div>
+
+<p id="result" style="color:white;font-size:18px;"></p>
+
+<button onclick="restart()">Restart</button>
+<button onclick="goBack()">Back</button>
+
+</div>
+
+
+
+<script>
+
+let difficulty="easy"
+let gameOver=false
+let player="X"
+let computer="O"
+
+const winPatterns=[
+[0,1,2],[3,4,5],[6,7,8],
+[0,3,6],[1,4,7],[2,5,8],
+[0,4,8],[2,4,6]
+]
+
+function startGame(level){
+
+difficulty=level
+
+let name=document.getElementById("playerName").value
+if(name==="") name="Player"
+
+document.getElementById("welcome").innerHTML="👋 "+name+" ("+difficulty+")"
+
+document.getElementById("startScreen").classList.add("hidden")
+document.getElementById("gameScreen").classList.remove("hidden")
+
+restart()
+
+}
+
+function playerMove(cell){
+
+if(cell.innerHTML!=="" || gameOver) return
+
+cell.innerHTML=player
+
+if(checkWinner(player)) return
+
+setTimeout(computerMove,300)
+
+}
+
+function computerMove(){
+
+let cells=document.querySelectorAll(".cell")
+
+let empty=[]
+
+cells.forEach((cell,i)=>{
+if(cell.innerHTML==="") empty.push(i)
+})
+
+if(empty.length===0) return
+
+let move
+
+if(difficulty==="easy"){
+
+move=randomMove(empty)
+
+}
+
+else if(difficulty==="medium"){
+
+move=blockOrRandom(cells,empty)
+
+}
+
+else{
+
+move=smartMove(cells,empty)
+
+}
+
+cells[move].innerHTML=computer
+
+checkWinner(computer)
+
+}
+
+function randomMove(empty){
+
+return empty[Math.floor(Math.random()*empty.length)]
+
+}
+
+function blockOrRandom(cells,empty){
+
+let block=findWinningMove(cells,player)
+
+if(block!==null) return block
+
+return randomMove(empty)
+
+}
+
+function smartMove(cells,empty){
+
+let win=findWinningMove(cells,computer)
+
+if(win!==null) return win
+
+let block=findWinningMove(cells,player)
+
+if(block!==null) return block
+
+if(cells[4].innerHTML==="") return 4
+
+return randomMove(empty)
+
+}
+
+function findWinningMove(cells,symbol){
+
+for(let pattern of winPatterns){
+
+let [a,b,c]=pattern
+
+let values=[cells[a].innerHTML,cells[b].innerHTML,cells[c].innerHTML]
+
+if(values.filter(v=>v===symbol).length===2 && values.includes("")){
+
+if(cells[a].innerHTML==="") return a
+if(cells[b].innerHTML==="") return b
+if(cells[c].innerHTML==="") return c
+
+}
+
+}
+
+return null
+
+}
+
+function checkWinner(symbol){
+
+let cells=document.querySelectorAll(".cell")
+
+for(let pattern of winPatterns){
+
+let a=cells[pattern[0]].innerHTML
+let b=cells[pattern[1]].innerHTML
+let c=cells[pattern[2]].innerHTML
+
+if(a===symbol && b===symbol && c===symbol){
+
+gameOver=true
+
+document.getElementById("result").innerHTML=
+(symbol==="X") ? "You Win 🎉" : "Computer Wins 🤖"
+
+return true
+
+}
+
+}
+
+return false
+
+}
+
+function restart(){
+
+let cells=document.querySelectorAll(".cell")
+
+cells.forEach(cell=>cell.innerHTML="")
+
+gameOver=false
+
+document.getElementById("result").innerHTML=""
+
+}
+
+function goBack(){
+
+document.getElementById("gameScreen").classList.add("hidden")
+document.getElementById("startScreen").classList.remove("hidden")
+
+}
+
+</script>
+
+</body>
+</html>
